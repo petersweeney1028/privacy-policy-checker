@@ -1,3 +1,8 @@
 trafilatura
 requests
-gspread
+pandas
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+tqdm

@@ -1,44 +1,88 @@
-import gspread
+import pandas as pd
 from typing import List, Dict
+import requests
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+from urllib.parse import urlparse, parse_qs
 
-def open_google_sheet(sheet_url: str) -> gspread.Spreadsheet:
+def read_urls_from_sheet(sheet_url: str) -> List[str]:
     """
-    Open a Google Sheet using its URL.
+    Read URLs from Column A of the first worksheet of a public Google Sheet.
     """
-    client = gspread.service_account(filename='credentials.json')
-    return client.open_by_url(sheet_url)
-
-def read_urls_from_sheet(sheet: gspread.Spreadsheet) -> List[str]:
-    """
-    Read URLs from Column A of the first worksheet.
-    """
-    worksheet = sheet.get_worksheet(0)
-    return worksheet.col_values(1)[1:]  # Exclude header row
-
-def update_sheet_with_results(sheet: gspread.Spreadsheet, results: List[Dict[str, str]]):
-    """
-    Update the sheet with the results for multiple phrases.
-    """
-    worksheet = sheet.get_worksheet(0)
+    try:
+        # Parse the Google Sheet URL
+        parsed_url = urlparse(sheet_url)
+        if parsed_url.netloc != 'docs.google.com':
+            raise ValueError("Invalid Google Sheets URL")
+        
+        # Extract sheet ID from the URL
+        path_parts = parsed_url.path.split('/')
+        if len(path_parts) < 4 or path_parts[1] != 'd':
+            raise ValueError("Invalid Google Sheets URL format")
+        sheet_id = path_parts[3]
+        
+        # Convert sheet URL to CSV export URL
+        csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+        
+        # Read CSV data
+        response = requests.get(csv_url)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        
+        df = pd.read_csv(pd.compat.StringIO(response.text))
+        
+        if df.empty:
+            print("Warning: The Google Sheet is empty.")
+            return []
+        
+        urls = df.iloc[:, 0].tolist()
+        
+        # Remove any empty strings or None values
+        urls = [url for url in urls if url and isinstance(url, str)]
+        
+        if not urls:
+            print("Warning: No valid URLs found in the Google Sheet.")
+        
+        return urls
+    except ValueError as ve:
+        print(f"Error: {str(ve)}")
+    except requests.exceptions.RequestException as re:
+        print(f"Error accessing the Google Sheet: {str(re)}")
+    except Exception as e:
+        print(f"An unexpected error occurred while reading the Google Sheet: {str(e)}")
     
-    # Update header row
-    header = ["URL", "Social Security Number", "Credit Card", "Bank Account"]
-    worksheet.update('A1:D1', [header])
-    
-    # Update results
-    for i, result in enumerate(results, start=2):  # Start from row 2 (exclude header)
-        url = result['url']
-        status = result['status']
-        
-        # Parse the status string to get individual phrase results
-        phrase_results = dict(item.split(": ") for item in status.split(", "))
-        
-        row = [
-            url,
-            'Y' if phrase_results.get("Social Security Number") == "Mentioned" else 'N',
-            'Y' if phrase_results.get("Credit Card") == "Mentioned" else 'N',
-            'Y' if phrase_results.get("Bank Account") == "Mentioned" else 'N'
-        ]
-        
-        worksheet.update(f'A{i}:D{i}', [row])
+    return []
 
+def write_results_to_sheet(sheet_id: str, results: List[Dict[str, str]]):
+    """
+    Write results back to the Google Sheet.
+    """
+    try:
+        creds = service_account.Credentials.from_service_account_file(
+            'credentials.json',
+            scopes=['https://www.googleapis.com/auth/spreadsheets']
+        )
+
+        service = build('sheets', 'v4', credentials=creds)
+
+        # Prepare the data to write
+        values = [['URL', 'SSN Status']] + [[result['url'], result['ssn_status']] for result in results]
+
+        body = {
+            'values': values
+        }
+
+        # Write to the sheet
+        sheet = service.spreadsheets()
+        result = sheet.values().update(
+            spreadsheetId=sheet_id,
+            range='Sheet1!A1',  # Assuming we're writing to Sheet1, starting from A1
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+
+        print(f"{result.get('updatedCells')} cells updated.")
+    except FileNotFoundError:
+        print("Error: credentials.json file not found. Please make sure you have set up the Google Sheets API credentials.")
+    except Exception as e:
+        print(f"An error occurred while writing results to the Google Sheet: {str(e)}")

@@ -1,4 +1,20 @@
-url,status
-https://www.example.com,"Social Security Number: Not Mentioned, Credit Card: Not Mentioned, Bank Account: Not Mentioned"
-https://www.privacy.gov.ph/data-privacy-act/,Error: Unable to fetch content
-https://www.ssa.gov/privacy/,"Social Security Number: Not Mentioned, Credit Card: Not Mentioned, Bank Account: Not Mentioned"
+url,ssn_status
+https://consensys.io/,N
+https://www.metalpay.com/,Y
+https://www.nium.com/,Y
+https://hellostake.com/au,NA
+https://www.ig.com/,NA
+https://syngrafii.com/,N
+https://mybambu.com/en/,Y
+https://guardian-gold.com.au/,N
+https://www.nerve.money/,NA
+https://www.hellosimba.com/,NA
+https://www.centbee.com/,N
+https://stablecoin.z.com/,N
+https://nordikcoin.com/,N
+https://skilling.com/row/en/markets/cryptocurrencies/,NA
+https://www.strike.org/,NA
+https://www.koreconx.com/,Y
+https://www.topcoder.com/,NA
+https://nanopay.net/,N
+paypal.com,NA
