@@ -104,11 +104,15 @@ def main():
     if write_back == 'y':
         try:
             sheet_id = sheet_url.split('/d/')[1].split('/')[0]
-            write_results_to_sheet(sheet_id, results)
+            success = write_results_to_sheet(sheet_id, results)
+            if success:
+                print("Results have been successfully written back to the Google Sheet.")
+            else:
+                print("Failed to write results back to the Google Sheet. Please check the error messages above.")
         except IndexError:
             print("Error: Invalid Google Sheet URL. Unable to extract sheet ID.")
         except Exception as e:
-            print(f"An error occurred while writing results to the Google Sheet: {str(e)}")
+            print(f"An unexpected error occurred while writing results to the Google Sheet: {str(e)}")
 
     print("\nThank you for using the Privacy Policy Checker!")
 

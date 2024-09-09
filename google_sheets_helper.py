@@ -5,6 +5,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from urllib.parse import urlparse, parse_qs
+from googleapiclient.errors import HttpError
 
 def read_urls_from_sheet(sheet_url: str) -> List[str]:
     """
@@ -81,8 +82,15 @@ def write_results_to_sheet(sheet_id: str, results: List[Dict[str, str]]):
             body=body
         ).execute()
 
-        print(f"{result.get('updatedCells')} cells updated.")
+        print(f"{result.get('updatedCells')} cells updated successfully in the Google Sheet.")
+        return True
     except FileNotFoundError:
         print("Error: credentials.json file not found. Please make sure you have set up the Google Sheets API credentials.")
+    except HttpError as error:
+        print(f"An error occurred while accessing the Google Sheet: {error}")
+        if error.resp.status == 403:
+            print("Make sure the service account email has edit access to the Google Sheet.")
     except Exception as e:
-        print(f"An error occurred while writing results to the Google Sheet: {str(e)}")
+        print(f"An unexpected error occurred while writing results to the Google Sheet: {str(e)}")
+    return False
+

@@ -15,16 +15,18 @@ This project is a Python-based tool that scrapes privacy policies from URLs prov
    - Enable the Google Sheets API for your project
    - Create credentials (Service Account Key) and download the JSON file
    - Rename the JSON file to `credentials.json` and place it in the project root directory
+   - Share your Google Sheet with the email address of the service account (found in the credentials.json file)
 
 ## Usage
 1. Prepare a Google Sheet with URLs in the first column.
-2. Run the script:
+2. Make sure the Google Sheet is either public or shared with the email address of your Google Cloud service account.
+3. Run the script:
    ```
    python privacy_policy_checker.py
    ```
-3. Enter the public Google Sheet URL when prompted.
-4. Optionally enter additional terms to check for, separated by commas.
-5. Choose whether to write results back to the Google Sheet.
+4. Enter the Google Sheet URL when prompted.
+5. Optionally enter additional terms to check for, separated by commas.
+6. Choose whether to write results back to the Google Sheet when prompted.
 
 ## Example
 ```
@@ -39,13 +41,26 @@ Processing URLs and checking for phrase mentions...
 Results have been written to output_results.csv
 
 Do you want to write results back to the Google Sheet? (y/n): y
-Results have been written back to the Google Sheet.
+10 cells updated successfully in the Google Sheet.
+Results have been successfully written back to the Google Sheet.
 
 Thank you for using the Privacy Policy Checker!
 ```
+
+## Writing Results Back to Google Sheet
+When prompted, you can choose to write the results back to the Google Sheet. This feature will:
+1. Create a new sheet named "Results" in your Google Sheet.
+2. Write the URLs and their corresponding SSN status to this new sheet.
+3. Overwrite any existing data in the "Results" sheet.
+
+To use this feature:
+1. Ensure your `credentials.json` file is set up correctly.
+2. Make sure the service account email has edit access to the Google Sheet.
+3. When prompted, enter 'y' to write results back to the sheet.
 
 ## Troubleshooting
 - If you encounter issues accessing the Google Sheet, make sure it's set to public or shared with the email address associated with your Google Cloud service account.
 - Ensure that the `credentials.json` file is present in the project root directory and contains valid Google Cloud credentials.
 - If the script fails to scrape a website, try running it again as some websites may have temporary access issues.
+- If you're unable to write results back to the Google Sheet, check that the service account has edit permissions for the sheet.
 - For any other issues, check the error messages in the console output and refer to the comments in the code for additional guidance.
