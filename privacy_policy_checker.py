@@ -1,11 +1,10 @@
 import re
 import time
-import csv
 from typing import List, Dict
 import trafilatura
 from requests.exceptions import RequestException
 import requests
-from google_sheets_helper import read_urls_from_sheet, write_results_to_sheet
+from google_sheets_helper import read_urls_from_sheet, write_results_to_csv
 from tqdm import tqdm
 
 def get_website_text_content(url: str, max_retries: int = 3) -> str:
@@ -31,6 +30,7 @@ def get_website_text_content(url: str, max_retries: int = 3) -> str:
         except Exception as e:
             print(f"Error fetching content from {url}: {str(e)}")
             return ""
+    return ""
 
 def check_for_phrases(text: str, phrases: List[str]) -> Dict[str, bool]:
     """
@@ -70,27 +70,23 @@ def process_urls(urls: List[str], phrases: List[str]) -> List[Dict[str, str]]:
         time.sleep(1)  # Add a delay to avoid overwhelming the servers
     return results
 
-def output_results_to_csv(results: List[Dict[str, str]]):
-    with open('output_results.csv', 'w', newline='') as csvfile:
-        fieldnames = ['url', 'ssn_status']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for result in results:
-            writer.writerow(result)
-    print("Results have been written to output_results.csv")
-
 def main():
     print("Welcome to the Privacy Policy Checker!")
     sheet_url = input("Please enter the public Google Sheet URL: ")
+
+    urls, error_message = read_urls_from_sheet(sheet_url)
+    if error_message:
+        print(error_message)
+        return
+
     additional_terms = input("Enter additional terms to check for, separated by commas (press Enter if none): ").split(',')
     additional_terms = [term.strip() for term in additional_terms if term.strip()]
     phrases_to_check = ["Social Security Number"] + additional_terms
 
-    print("\nReading URLs from the Google Sheet...")
-    urls = read_urls_from_sheet(sheet_url)
+    print("\nReading URLs...")
     
     if not urls:
-        print("Error: No valid URLs found in the Google Sheet. Please check the sheet and try again.")
+        print("Error: No valid URLs found. Please check the input source and try again.")
         return
 
     print(f"\nFound {len(urls)} URLs to process.")
@@ -98,22 +94,10 @@ def main():
     results = process_urls(urls, phrases_to_check)
 
     print("\nWriting results to CSV file...")
-    output_results_to_csv(results)
+    output_file = "output_results.csv"
+    write_results_to_csv(results, output_file)
 
-    write_back = input("\nDo you want to write results back to the Google Sheet? (y/n): ").lower().strip()
-    if write_back == 'y':
-        try:
-            sheet_id = sheet_url.split('/d/')[1].split('/')[0]
-            success = write_results_to_sheet(sheet_id, results)
-            if success:
-                print("Results have been successfully written back to the Google Sheet.")
-            else:
-                print("Failed to write results back to the Google Sheet. Please check the error messages above.")
-        except IndexError:
-            print("Error: Invalid Google Sheet URL. Unable to extract sheet ID.")
-        except Exception as e:
-            print(f"An unexpected error occurred while writing results to the Google Sheet: {str(e)}")
-
+    print(f"\nResults have been written to {output_file}")
     print("\nThank you for using the Privacy Policy Checker!")
 
 if __name__ == "__main__":
