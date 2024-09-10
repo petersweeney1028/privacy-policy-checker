@@ -3,7 +3,6 @@ import time
 from typing import List, Dict
 import trafilatura
 from requests.exceptions import RequestException
-import requests
 from google_sheets_helper import read_urls_from_sheet, write_results_to_csv
 from tqdm import tqdm
 
