@@ -2,7 +2,6 @@ import re
 import time
 from typing import List, Dict
 import trafilatura
-from requests.exceptions import RequestException
 from google_sheets_helper import read_urls_from_sheet, write_results_to_csv
 from tqdm import tqdm
 
@@ -21,14 +20,11 @@ def get_website_text_content(url: str, max_retries: int = 3) -> str:
             else:
                 print(f"Warning: No content downloaded from {url}")
                 return ""
-        except RequestException as e:
-            print(f"Request error fetching content from {url} (attempt {attempt + 1}/{max_retries}): {str(e)}")
+        except Exception as e:
+            print(f"Error fetching content from {url} (attempt {attempt + 1}/{max_retries}): {str(e)}")
             if attempt == max_retries - 1:
                 return ""
             time.sleep(2 ** attempt)  # Exponential backoff
-        except Exception as e:
-            print(f"Error fetching content from {url}: {str(e)}")
-            return ""
     return ""
 
 def check_for_phrases(text: str, phrases: List[str]) -> Dict[str, bool]:
